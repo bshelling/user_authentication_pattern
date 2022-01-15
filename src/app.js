@@ -9,6 +9,7 @@ const cors = require('cors')
 const fn = require('./fn')
 const msg = require('./msg')
 const dotenv = require('dotenv')
+const cookiPar = require('cookie-parser')
 
 dotenv.config()
 
@@ -17,12 +18,14 @@ dotenv.config()
  */
 const user = require('./models/User')
 const { redirect } = require('express/lib/response')
+const cookieParser = require('cookie-parser')
 
 const PORT = 3000
 const HOST = '0.0.0.0'
 
 app.use(bp.json())
 app.use(bp.urlencoded({extended:true}))
+app.use(cookieParser())
 app.use(cors())
 
 const dbUser = 'admin'
@@ -51,12 +54,15 @@ app.get('/',(req,res) => {
 
 }) 
 
+
 /**
  * path: /paywall
  */
-app.get('/paywall',fn.verify,(req,res) => {
-
+app.get('/dashboard',fn.verify,(req,res) => {
+    
+    
     return res.json({
+        title: 'Dashboard',
         page: 'user-dashboard'
     })
      
@@ -71,11 +77,11 @@ app.post('/authenticate',async (req,res)=>{
     try {
     
         const usr = await user.User.findOne({username:req.body.username}).exec()
-        if(!await fn.comparePw(usr.password,req.body.password)) return redirect(403,'/')
-        await fn.sign()
+        if(!await fn.comparePw(usr.password,req.body.password)) return redirect(403,'/forbidden')
+        const signedToken = await fn.sign()
+        await res.cookie('accessToken',signedToken, {httpOnly: true} )
         return res.json({
-            msg: await fn.comparePw(usr.password,req.body.password),
-            accessToken: await fn.sign()
+            msg: await fn.comparePw(usr.password,req.body.password)
         })
 
 
@@ -86,9 +92,6 @@ app.post('/authenticate',async (req,res)=>{
     }
 
 })
-
-
-
 
 /**
  * path: /register
@@ -126,6 +129,13 @@ app.post('/reset-password',(req,res) =>{
     })
 
 
+})
+
+app.get('/forbidden',(req,res)=>{
+
+    return res.json({
+        msg: "Please try again"
+    })
 })
 
 app.listen(PORT,HOST,(err) => {

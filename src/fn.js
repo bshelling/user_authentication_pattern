@@ -6,8 +6,9 @@ dotenv.config()
 
 
 module.exports.verify = async (req, res, next) => {
+ 
     try {
-        if (!await jwt.verify('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXBlIjoiYXBwVXNlciIsImlhdCI6MTY0MjIwNjU4Mn0.9tSUiMUc05_Q3EnLGu4TA172xwSmDB6OWwiuox5Mi2k', process.env.jwtSecret)) res.redirect(403)
+        if (!await jwt.verify(req.cookies.accessToken, process.env.jwtSecret)) res.redirect(403)
             next()
     }
     catch (err) {
