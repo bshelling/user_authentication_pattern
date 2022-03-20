@@ -5,6 +5,7 @@ import * as cookieParser from 'cookie-parser'
 import * as dotenv from 'dotenv'
 import { verify, comparePw, hashPw, sign } from './fn'
 import * as msg from './msg'
+import { PrismaClient } from '@prisma/client'
 
 dotenv.config()
 
@@ -17,20 +18,24 @@ app.use(bp.urlencoded({ extended: true }))
 app.use(cookieParser.default())
 app.use(cors.default())
 
+
+
+const prisma = new PrismaClient()
+
 const TESTPW = ""
 
 // /**
 //  * path: /
 //  */
-// app.get('/',(req: express.Request,res: express.Response) => {
+app.get('/',(req: express.Request,res: express.Response) => {
 
-//     return res.json([{
-//         "title":"Jwt Authentication Service",
-//         "author":"bshelling@gmail.com",
-//         "version":"1.0"
-//     }])
+    return res.json([{
+        "title":"Jwt Authentication Service",
+        "author":"bshelling@gmail.com",
+        "version":"1.0"
+    }])
 
-// }) 
+}) 
 
 
 // /**
@@ -52,23 +57,25 @@ app.get('/dashboard',verify,(req:express.Request,res: express.Response) => {
 app.post('/login', async (req: express.Request, res: express.Response) => {
 
     try {
-
-        const signedToken = await sign()
-        await res.cookie('accessToken',signedToken, {httpOnly: true,expires: new Date(Date.now() + 8 * 3600000), path: '/dashboard'} )
-        const pass = await comparePw(TESTPW, req.body.password)
-
+        const user = await prisma.user.findUnique({where:{email: req.body.username},
+            select: {
+                password: true
+            }
+        })
+        const pass = await comparePw(user?.password, req.body.password)
         if (pass) {
+             const signedToken = await sign()
+             await res.cookie('accessToken',signedToken, {httpOnly: true,expires: new Date(Date.now() + 8 * 3600000), path: '/dashboard'} )
             return res.json({
                 msg: pass
             })
         }
         else {
-
             res.redirect(302,'/login')
         }
     }
     catch (err) {
-
+        console.log(err)
         res.status(500).json({
             message: "Something has gone wrong please try again"
         })
@@ -82,10 +89,16 @@ app.post('/login', async (req: express.Request, res: express.Response) => {
 app.post('/register', async (req: express.Request, res: express.Response) => {
 
     try {
-        const hashed = await hashPw(req.body.password)
+        const hashed: any = await hashPw(req.body.password)
+        const newUser = await prisma.user.create({
+            data: {
+                name: 'Alice',
+                email: 'alice@prisma.io',
+                password: hashed
+            },
+        })
         return res.json({
-            message: `${req.body.username} account has been created`,
-            password: hashed
+            message: `${req.body.username} account has been created`
         })
     }
     catch (error) {
