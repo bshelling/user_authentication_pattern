@@ -12,6 +12,9 @@ model User {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   email     String   @unique
+  username String @unique
   name      String?
   password  String   @unique
+  resetPass String?  @unique
+  resetExp  Int? 
 }

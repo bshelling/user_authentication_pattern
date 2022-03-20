@@ -4,6 +4,7 @@ import * as jwt from 'jsonwebtoken'
 import * as msg from './msg'
 import * as dotenv from 'dotenv'
 import * as express from 'express'
+import * as crypto from 'crypto'
 
 dotenv.config()
 
@@ -23,7 +24,17 @@ export const sign = async () => {
         type: 'appUser',
         role: 'appPaid'
     }, "process.env.jwtSecret",{
-        expiresIn: '8h'
+        expiresIn: '30s'
+    })
+    return signed
+}
+
+export const resetpass = async () => {
+    const signed = await jwt.sign({
+        type: 'appUser',
+        action: 'reset'
+    }, "process.env.jwtSecret",{
+        expiresIn: '5m'
     })
     return signed
 }
@@ -38,6 +49,10 @@ export const hashPw = async (pw: string) => {
         return err
     }
 
+}
+
+export const genHash = () => {
+    return crypto.randomBytes(20).toString('hex')
 }
 
 export const comparePw = async (hash: any, pw: string) => {
