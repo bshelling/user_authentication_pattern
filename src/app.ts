@@ -360,6 +360,14 @@ app.post('/reset-password/:token', async (req: express.Request, res: express.Res
 
 })
 
+/**
+ * User logout
+ * path: /logout
+ */
+app.get('/logout', (req: express.Request, res: express.Response) => {
+    res.clearCookie('accessToken',{path:'/dashboard'})
+    return res.redirect('/')
+})
 
 /**
  * User redirect when token has expired
