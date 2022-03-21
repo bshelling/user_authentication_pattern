@@ -8,3 +8,4 @@ Changes to this project will be documented in this file
 ### Added 
 - Forgot/Reset password pattern
 - Added Prisma ORM
+- Added Login retry logic - locks account after 3 attempts
