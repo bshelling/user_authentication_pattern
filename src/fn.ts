@@ -51,8 +51,8 @@ export const hashPw = async (pw: string) => {
 
 }
 
-export const genHash = () => {
-    return crypto.randomBytes(20).toString('hex')
+export const genHash = (bytes: number) => {
+    return crypto.randomBytes(bytes).toString('hex')
 }
 
 export const comparePw = async (hash: any, pw: string) => {
