@@ -216,6 +216,16 @@ app.post('/register', async (req: express.Request, res: express.Response) => {
 
 })
 
+/**
+ * User requests to reset password
+ * path: /reset-password/:token 
+ * 
+ * - User enters email to request a new password
+ * - Email is passed to a database query to retrieve
+ * - If the user exists - reset password hash is generate and added to the user's record with a token expiration 
+ * - If the user doesn't exist - 400 error with message "Account doesn't exist"
+ * 
+ */
 app.post('/forgot-password', async (req: express.Request, res: express.Response) => {
     try {
         const getUser = await prisma.user.findUnique({
@@ -235,6 +245,8 @@ app.post('/forgot-password', async (req: express.Request, res: express.Response)
                     resetExp: new Date(Date.now() + MINUTES * 60000).valueOf()
                 }
             })
+
+            // Added for development feedback
             return res.json({
                 resetPasswordToken: token,
                 resetPasswordExpiration: new Date(Date.now() + MINUTES * 60000).valueOf(),
@@ -244,15 +256,14 @@ app.post('/forgot-password', async (req: express.Request, res: express.Response)
         }
         else {
             return res.status(400).json({
-                message: "Email doesn't exist"
+                message: "Account doesn't exist"
             })
         }
-
 
     }
     catch (e) {
         return res.status(500).json({
-            msg: e
+            msg: "Something went wrong please try again"
         })
     }
 
