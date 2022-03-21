@@ -363,6 +363,7 @@ app.post('/reset-password/:token', async (req: express.Request, res: express.Res
 /**
  * User logout
  * path: /logout
+ * Clears access token when user logs out
  */
 app.get('/logout', (req: express.Request, res: express.Response) => {
     res.clearCookie('accessToken',{path:'/dashboard'})
