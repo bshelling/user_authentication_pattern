@@ -29,16 +29,6 @@ export const sign = async () => {
     return signed
 }
 
-export const resetpass = async () => {
-    const signed = await jwt.sign({
-        type: 'appUser',
-        action: 'reset'
-    }, "process.env.jwtSecret",{
-        expiresIn: '5m'
-    })
-    return signed
-}
-
 export const hashPw = async (pw: string) => {
 
     try {
@@ -51,8 +41,8 @@ export const hashPw = async (pw: string) => {
 
 }
 
-export const genHash = () => {
-    return crypto.randomBytes(20).toString('hex')
+export const genHash = (bytes: number) => {
+    return crypto.randomBytes(bytes).toString('hex')
 }
 
 export const comparePw = async (hash: any, pw: string) => {
