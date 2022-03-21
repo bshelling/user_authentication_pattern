@@ -29,16 +29,6 @@ export const sign = async () => {
     return signed
 }
 
-export const resetpass = async () => {
-    const signed = await jwt.sign({
-        type: 'appUser',
-        action: 'reset'
-    }, "process.env.jwtSecret",{
-        expiresIn: '5m'
-    })
-    return signed
-}
-
 export const hashPw = async (pw: string) => {
 
     try {

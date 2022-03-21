@@ -1,3 +1,6 @@
+/**
+ * Import dependencies
+ */
 import express from 'express'
 import * as bp from 'body-parser'
 import * as cors from 'cors'
@@ -7,10 +10,10 @@ import { verify, comparePw, hashPw, sign, resetpass, genHash } from './fn'
 import * as msg from './msg'
 import { PrismaClient } from '@prisma/client'
 
+/**
+ * Initialize dotenv for environment variables
+ */
 dotenv.config()
-
-const PORT = 3000
-const HOST = '0.0.0.0'
 
 const app = express()
 app.use(bp.json())
@@ -18,14 +21,22 @@ app.use(bp.urlencoded({ extended: true }))
 app.use(cookieParser.default())
 app.use(cors.default())
 
+/**
+ * Instantiate Prisma Client
+ */
 const prisma = new PrismaClient()
 
+/**
+ * Environment Variables
+ */
 const TESTPW = ""
 const MINUTES = 3
-const SITE = 'http://localhost:300'
+const SITE = 'http://localhost:3000'
 const RETRY_BYTES = 16
 const RETRY_TIMER = 5
 const RESET_BYTES = 20
+const PORT = 3000
+const HOST = '0.0.0.0'
 
 
 // /**
@@ -250,9 +261,11 @@ app.post('/forgot-password', async (req: express.Request, res: express.Response)
 })
 
 
-// /**
-//  * path: /reset-password
-//  */
+/**
+ * User resets password with valid token
+ * path: /reset-password/:token 
+ * 
+ */
 app.post('/reset-password/:token', async (req: express.Request, res: express.Response) => {
 
     try {
@@ -324,9 +337,11 @@ app.post('/reset-password/:token', async (req: express.Request, res: express.Res
 
 })
 
-// /**
-//  * path: /forbidden
-//  */
+
+/**
+ * User redirect when token has expired
+ * path: /forbidden
+ */
 app.get('/forbidden', (req: express.Request, res: express.Response) => {
 
     return res.json({
