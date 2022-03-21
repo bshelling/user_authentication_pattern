@@ -39,9 +39,9 @@ const PORT = 3000
 const HOST = '0.0.0.0'
 
 
-// /**
-//  * path: /
-//  */
+/**
+* path: /
+*/
 app.get('/', (req: express.Request, res: express.Response) => {
 
     return res.json([{
@@ -52,11 +52,15 @@ app.get('/', (req: express.Request, res: express.Response) => {
 
 })
 
-// /**
-//  * path: /Dashboard
-//  */
+/**
+* path: /Dashboard
+* - User access dashboard
+* - Stored jwt is sent with request through verify middleware.
+* - If jwt is valid user access is granted if not user is redirected to /forbidden
+*/
 app.get('/dashboard', verify, (req: express.Request, res: express.Response) => {
 
+    // Added for development feedback
     return res.json({
         title: 'Dashboard',
         page: 'user-dashboard'
@@ -64,9 +68,15 @@ app.get('/dashboard', verify, (req: express.Request, res: express.Response) => {
 
 })
 
-// /**
-//  * path: /login
-//  */
+/**
+* path: /login
+* - User enters username and password
+* - Username is passed to a database query to retrieve the user
+* - Password is passed to the compare plain text with hashed
+* - If the password is valid and login retries are < 3 retry and retryExp set to 0, jwt is signed and set to cookie, with an expiration of 8 hours. Then redirect to /dashboard
+* - If 3 password retries, account is locked for time period set by RETRY_TIMER variable, after time has expired the user can attempt to login
+* - If the user doesn't exist - 400 error with message "Account doesn't exist"
+*/
 app.post('/login', async (req: express.Request, res: express.Response) => {
 
     try {
@@ -96,13 +106,10 @@ app.post('/login', async (req: express.Request, res: express.Response) => {
 
 
             await res.cookie('accessToken', signedToken, { httpOnly: true, expires: new Date(Date.now() + 8 * 3600000), path: '/dashboard' })
-            return res.json({
-                msg: pass
-            })
+            return res.redirect('/dashboard')
         }
         else {
             if (user) {
-
 
                 switch (user.retry) {
 
@@ -191,6 +198,9 @@ app.post('/login', async (req: express.Request, res: express.Response) => {
 
 /**
  * path: /register
+ * - New user enters username, email, and password
+ * - Plain text password is hashed and new user record is stored with username/email/password
+ * - Response: message: `${req.body.username} account has been created`
  */
 app.post('/register', async (req: express.Request, res: express.Response) => {
 
@@ -216,6 +226,16 @@ app.post('/register', async (req: express.Request, res: express.Response) => {
 
 })
 
+/**
+ * User requests to reset password
+ * path: /reset-password/:token 
+ * 
+ * - User enters email to request a new password
+ * - Email is passed to a database query to retrieve the user
+ * - If the user exists - reset password hash is generate and added to the user's record with a token expiration 
+ * - If the user doesn't exist - 400 error with message "Account doesn't exist"
+ * 
+ */
 app.post('/forgot-password', async (req: express.Request, res: express.Response) => {
     try {
         const getUser = await prisma.user.findUnique({
@@ -235,6 +255,8 @@ app.post('/forgot-password', async (req: express.Request, res: express.Response)
                     resetExp: new Date(Date.now() + MINUTES * 60000).valueOf()
                 }
             })
+
+            // Added for development feedback
             return res.json({
                 resetPasswordToken: token,
                 resetPasswordExpiration: new Date(Date.now() + MINUTES * 60000).valueOf(),
@@ -243,16 +265,17 @@ app.post('/forgot-password', async (req: express.Request, res: express.Response)
             })
         }
         else {
+
+
             return res.status(400).json({
-                message: "Email doesn't exist"
+                message: "Account doesn't exist"
             })
         }
-
 
     }
     catch (e) {
         return res.status(500).json({
-            msg: e
+            msg: "Something went wrong please try again"
         })
     }
 
@@ -264,6 +287,13 @@ app.post('/forgot-password', async (req: express.Request, res: express.Response)
 /**
  * User resets password with valid token
  * path: /reset-password/:token 
+ * 
+ * - User enters a new password and token is sent with request
+ * - Reset password token is passed to a database query to retrieve the user
+ * - If the reset expiration exists - a check is executed to see if it's expired. 
+ * - If the token is not expired, the new password is updated on the record
+ * - If the token is expired - response: "Reset password link has expired",
+ * - If the token is invalid - response: "Are you trying to reset your password? Visit ${SITE}/forgot-password to reset your password"
  * 
  */
 app.post('/reset-password/:token', async (req: express.Request, res: express.Response) => {
@@ -291,6 +321,8 @@ app.post('/reset-password/:token', async (req: express.Request, res: express.Res
                     }
                 })
 
+
+              // Added for development feedback              
                 return res.json({
                     expiration: user.resetExp,
                     now: now,
@@ -300,17 +332,8 @@ app.post('/reset-password/:token', async (req: express.Request, res: express.Res
                 })
             }
             else {
-
-                const addResetToken = await prisma.user.update({
-                    where: {
-                        email: user.email
-                    },
-                    data: {
-                        resetExp: 0,
-                        resetPass: ""
-                    }
-                })
-
+                
+                 // Added for development feedback      
                 return res.json({
                     message: "Reset password has expired. Please try again if needed.",
                     expiredToken: user.resetExp > now ? true : false,
@@ -337,6 +360,14 @@ app.post('/reset-password/:token', async (req: express.Request, res: express.Res
 
 })
 
+/**
+ * User logout
+ * path: /logout
+ */
+app.get('/logout', (req: express.Request, res: express.Response) => {
+    res.clearCookie('accessToken',{path:'/dashboard'})
+    return res.redirect('/')
+})
 
 /**
  * User redirect when token has expired
