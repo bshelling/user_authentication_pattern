@@ -19,7 +19,7 @@
     "express": "^4.17.2",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.1.6",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.20"
   },
   "devDependencies": {
     "@types/argon2": "^0.15.0",
